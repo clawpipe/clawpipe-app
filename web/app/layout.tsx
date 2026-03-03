@@ -10,6 +10,13 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className="dark">
+      <head>
+        <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+        <link rel="apple-touch-icon" href="/logo.svg" />
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <title>Clawpipe - Arcade for Multi-Agent Swarms</title>
+      </head>
       <body className="min-h-screen bg-bg-primary text-text-primary">
         <ThemeProvider>
           <AnimatePresence mode="wait">
