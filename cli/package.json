@@ -1,0 +1,15 @@
+{
+  "name": "clawpipe-cli",
+  "version": "1.0.0",
+  "description": "Clawpipe CLI - Run crash tests from the command line",
+  "main": "src/index.js",
+  "bin": {
+    "clawpipe": "./src/index.js"
+  },
+  "scripts": {
+    "test": "echo \"CLI tests not implemented yet\""
+  },
+  "keywords": ["cli", "testing", "agents", "openclaw"],
+  "author": "",
+  "license": "MIT"
+}
