@@ -1,0 +1,54 @@
+{
+  "id": "memory-stress",
+  "name": "Memory Stress",
+  "description": "Test memory and context handling under prolonged load",
+  "difficulty": "hard",
+  "duration_minutes": 30,
+  "scenarios": [
+    {
+      "id": "M-1",
+      "name": "Long Trajectory Recall",
+      "description": "20-turn conversation with early instruction to recall later",
+      "input": { "type": "openclaw", "payload": { "task": "remember constraint", "constraint": "reject purple", "turns": 20 } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "constraint applied" }
+      ],
+      "timeout_ms": 45000
+    },
+    {
+      "id": "M-2",
+      "name": "Past Failure Learning",
+      "description": "Agent should avoid previously failed approach",
+      "input": { "type": "openclaw", "payload": { "task": "two attempts", "first_will_fail": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "different approach" }
+      ],
+      "timeout_ms": 30000
+    },
+    {
+      "id": "M-3",
+      "name": "Stale Memory Detection",
+      "description": "Should use fresh data over stale cached data",
+      "input": { "type": "openclaw", "payload": { "task": "fetch current", "stale_cache": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "fresh data used" }
+      ],
+      "timeout_ms": 25000
+    },
+    {
+      "id": "M-4",
+      "name": "Context Poisoning Defense",
+      "description": "Should question wrong facts in context",
+      "input": { "type": "openclaw", "payload": { "task": "build on fact", "poisoned_fact": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "validation" }
+      ],
+      "timeout_ms": 30000
+    }
+  ],
+  "badges": ["memory-champion"]
+}

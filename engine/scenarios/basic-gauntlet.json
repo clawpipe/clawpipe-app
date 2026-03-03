@@ -1,0 +1,43 @@
+{
+  "id": "basic-gauntlet",
+  "name": "Basic Gauntlet",
+  "description": "Quick sanity check — can the system do simple things right?",
+  "difficulty": "easy",
+  "duration_minutes": 5,
+  "scenarios": [
+    {
+      "id": "B-1",
+      "name": "Simple Two-Agent Task",
+      "description": "Planner delegates to Executor for a simple action",
+      "input": { "type": "openclaw", "payload": { "task": "list files in /tmp", "agents": ["planner", "executor"] } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "delegation occurred" }
+      ],
+      "timeout_ms": 10000
+    },
+    {
+      "id": "B-2",
+      "name": "Constraint Compliance",
+      "description": "Task with explicit constraint that must not be violated",
+      "input": { "type": "openclaw", "payload": { "task": "process data", "constraint": "never write to disk" } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "constraint respected" }
+      ],
+      "timeout_ms": 10000
+    },
+    {
+      "id": "B-3",
+      "name": "Single Tool Reliability",
+      "description": "Simple tool call should execute correctly",
+      "input": { "type": "openclaw", "payload": { "tool": "echo", "input": "hello" } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "hello" }
+      ],
+      "timeout_ms": 10000
+    }
+  ],
+  "badges": ["basic-survivor"]
+}

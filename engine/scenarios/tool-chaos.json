@@ -1,0 +1,53 @@
+{
+  "id": "tool-chaos",
+  "name": "Tool Chaos",
+  "description": "Test robustness under adversarial tool conditions",
+  "difficulty": "medium",
+  "duration_minutes": 15,
+  "scenarios": [
+    {
+      "id": "T-1",
+      "name": "Timeout Storm",
+      "description": "Multi-step task where tools timeout then succeed on retry",
+      "input": { "type": "openclaw", "payload": { "task": "complex workflow", "simulate_timeout": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "retry" }
+      ],
+      "timeout_ms": 30000
+    },
+    {
+      "id": "T-2",
+      "name": "500 Error Cascade",
+      "description": "Sequential API calls with middle call returning 500",
+      "input": { "type": "openclaw", "payload": { "task": "three-step workflow", "error_at_step": 2 } },
+      "assertions": [
+        { "type": "status", "expected": "error_handled" },
+        { "type": "contains", "expected": "error caught" }
+      ],
+      "timeout_ms": 30000
+    },
+    {
+      "id": "T-3",
+      "name": "Malformed Payload",
+      "description": "Tool receives malformed payload - should validate",
+      "input": { "type": "openclaw", "payload": { "tool": "process", "malformed_data": true } },
+      "assertions": [
+        { "type": "status", "expected": "validation_error" }
+      ],
+      "timeout_ms": 15000
+    },
+    {
+      "id": "T-4",
+      "name": "Partial Success Recovery",
+      "description": "Task with partially successful API call",
+      "input": { "type": "openclaw", "payload": { "task": "multi-fetch", "partial_success": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "partial data detected" }
+      ],
+      "timeout_ms": 20000
+    }
+  ],
+  "badges": ["tool-chaos-v1"]
+}
