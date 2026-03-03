@@ -1,0 +1,65 @@
+{
+  "id": "basic-sanity",
+  "name": "Basic Sanity",
+  "description": "Quick 5-scenario sanity check — can your swarm do basic things right?",
+  "difficulty": "easy",
+  "duration_minutes": 3,
+  "scenarios": [
+    {
+      "id": "S-1",
+      "name": "Hello World",
+      "description": "Simplest possible task — agent responds to a greeting",
+      "input": { "type": "openclaw", "payload": { "task": "say hello" } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "hello" }
+      ],
+      "timeout_ms": 5000
+    },
+    {
+      "id": "S-2",
+      "name": "Two-Agent Handoff",
+      "description": "Planner delegates to Executor for a simple action",
+      "input": { "type": "openclaw", "payload": { "task": "list files in /tmp", "agents": ["planner", "executor"] } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "delegation occurred" }
+      ],
+      "timeout_ms": 10000
+    },
+    {
+      "id": "S-3",
+      "name": "Tool Call Success",
+      "description": "Simple tool call executes correctly",
+      "input": { "type": "openclaw", "payload": { "tool": "echo", "input": "hello" } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "hello" }
+      ],
+      "timeout_ms": 8000
+    },
+    {
+      "id": "S-4",
+      "name": "Parallel Execution",
+      "description": "Two independent tasks run concurrently",
+      "input": { "type": "openclaw", "payload": { "task": "parallel", "tasks": ["task A", "task B"] } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "both completed" }
+      ],
+      "timeout_ms": 10000
+    },
+    {
+      "id": "S-5",
+      "name": "Graceful Degradation",
+      "description": "Agent handles a failing tool without crashing",
+      "input": { "type": "openclaw", "payload": { "task": "handle error", "simulate_failure": true } },
+      "assertions": [
+        { "type": "status", "expected": "success" },
+        { "type": "contains", "expected": "error handled" }
+      ],
+      "timeout_ms": 10000
+    }
+  ],
+  "badges": ["basic-survivor"]
+}
