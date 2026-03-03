@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install API dependencies
+        working-directory: ./api
+        run: npm ci
+
+      - name: Install Web dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: TypeScript type check (API)
+        working-directory: ./api
+        run: npx tsc --noEmit
+
+      - name: TypeScript type check (Web)
+        working-directory: ./web
+        run: npx tsc --noEmit
+
+      - name: Build API
+        working-directory: ./api
+        run: npm run build
+
+      - name: Build Web
+        working-directory: ./web
+        run: npm run build
+
+  lint:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install Web dependencies
+        working-directory: ./web
+        run: npm ci
+
+      - name: Run ESLint
+        working-directory: ./web
+        run: npm run lint
