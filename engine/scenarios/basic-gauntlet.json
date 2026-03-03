@@ -1,43 +1,182 @@
 {
-  "id": "basic-gauntlet",
-  "name": "Basic Gauntlet",
-  "description": "Quick sanity check — can the system do simple things right?",
-  "difficulty": "easy",
-  "duration_minutes": 5,
+  "pack_id": "basic-gauntlet",
+  "pack_name": "Basic Gauntlet Pack",
+  "theme": "Walking while juggling",
+  "difficulty": 2,
+  "difficulty_label": "Moderate",
+  "description": "Test core functionality with increased complexity and slight adversarial conditions",
+  "estimated_duration_minutes": 12,
   "scenarios": [
     {
-      "id": "B-1",
-      "name": "Simple Two-Agent Task",
-      "description": "Planner delegates to Executor for a simple action",
-      "input": { "type": "openclaw", "payload": { "task": "list files in /tmp", "agents": ["planner", "executor"] } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "delegation occurred" }
+      "scenario_id": "G-1",
+      "name": "Multi-Step Goal Chaining",
+      "category": "Basic Functionality",
+      "difficulty": 2,
+      "timeout_ms": 60000,
+      "description": "Create a file, read it, modify it, and verify the modification",
+      "constraints": [
+        "Must complete all 4 steps in sequence",
+        "Each step must succeed for overall pass",
+        "Final content must reflect all modifications"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "file_exists",
+          "path": "/tmp/clawpipe_gauntlet_g1.txt",
+          "message": "Initial file must be created"
+        },
+        {
+          "type": "file_content_contains",
+          "path": "/tmp/clawpipe_gauntlet_g1.txt",
+          "expected": "modified",
+          "message": "Final content must contain modification"
+        },
+        {
+          "type": "all_steps_completed",
+          "message": "All 4 steps must be completed"
+        }
+      ],
+      "failure_modes": ["FM-14", "FM-03"],
+      "pass_criteria": "All steps completed successfully",
+      "max_retries": 2
     },
     {
-      "id": "B-2",
-      "name": "Constraint Compliance",
-      "description": "Task with explicit constraint that must not be violated",
-      "input": { "type": "openclaw", "payload": { "task": "process data", "constraint": "never write to disk" } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "constraint respected" }
+      "scenario_id": "G-2",
+      "name": "Three-Agent Handoff",
+      "category": "Coordination",
+      "difficulty": 2,
+      "timeout_ms": 90000,
+      "description": "Three agents must coordinate: Planner → Executor → Verifier",
+      "constraints": [
+        "Clear handoff between all three agents",
+        "No agent does work outside their scope",
+        "Final verification must confirm results"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "delegation_chain",
+          "expected_agents": 3,
+          "message": "Must show 3-agent delegation chain"
+        },
+        {
+          "type": "scope_compliance",
+          "message": "Each agent must stay within assigned scope"
+        },
+        {
+          "type": "verification_completed",
+          "message": "Verifier must confirm results"
+        }
+      ],
+      "failure_modes": ["FM-06", "FM-07", "FM-08"],
+      "pass_criteria": "Proper 3-agent coordination with verification",
+      "max_retries": 2
     },
     {
-      "id": "B-3",
-      "name": "Single Tool Reliability",
-      "description": "Simple tool call should execute correctly",
-      "input": { "type": "openclaw", "payload": { "tool": "echo", "input": "hello" } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "hello" }
+      "scenario_id": "G-3",
+      "name": "Tool Error Recovery",
+      "category": "Tool Usage",
+      "difficulty": 2,
+      "timeout_ms": 45000,
+      "description": "Initial tool call fails, must recover and complete task",
+      "constraints": [
+        "Must handle initial failure gracefully",
+        "Must attempt recovery",
+        "Must complete task after recovery"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "error_detected",
+          "message": "Must detect initial tool failure"
+        },
+        {
+          "type": "recovery_attempted",
+          "message": "Must attempt to recover from error"
+        },
+        {
+          "type": "task_completed",
+          "message": "Must complete the overall task"
+        }
+      ],
+      "failure_modes": ["FM-01", "FM-04"],
+      "pass_criteria": "Error handled and task completed",
+      "max_retries": 2
+    },
+    {
+      "scenario_id": "G-4",
+      "name": "Partial Constraint Satisfaction",
+      "category": "Instruction Following",
+      "difficulty": 2,
+      "timeout_ms": 35000,
+      "description": "Task with 4 constraints, must satisfy at least 3",
+      "constraints": [
+        "Constraint A: Use specific format",
+        "Constraint B: Include timestamp",
+        "Constraint C: Minimum 2 items",
+        "Constraint D: Sort alphabetically"
+      ],
+      "assertions": [
+        {
+          "type": "constraint_count",
+          "min_required": 3,
+          "message": "Must satisfy at least 3 of 4 constraints"
+        }
+      ],
+      "failure_modes": ["FM-11", "FM-10"],
+      "pass_criteria": "At least 3 constraints satisfied",
+      "max_retries": 1
+    },
+    {
+      "scenario_id": "G-5",
+      "name": "Concurrent Task Execution",
+      "category": "Basic Functionality",
+      "difficulty": 2,
+      "timeout_ms": 50000,
+      "description": "Handle 3 independent tasks, all must complete",
+      "constraints": [
+        "All 3 independent tasks must complete",
+        "No task should be skipped",
+        "Results must be returned for each"
+      ],
+      "assertions": [
+        {
+          "type": "task_completion",
+          "task_count": 3,
+          "message": "All 3 tasks must complete"
+        },
+        {
+          "type": "no_task_skipped",
+          "message": "No task should be skipped"
+        }
+      ],
+      "failure_modes": ["FM-03", "FM-14"],
+      "pass_criteria": "All 3 tasks completed",
+      "max_retries": 1
     }
   ],
-  "badges": ["basic-survivor"]
+  "badges": [
+    {
+      "badge_id": "gauntlet-chainsaw",
+      "name": "Chainsaw",
+      "description": "Complete G-1 multi-step without retries",
+      "condition": "scenario_G1_pass_first_try"
+    },
+    {
+      "badge_id": "gauntlet-triple-threat",
+      "name": "Triple Threat",
+      "description": "Complete G-2 with perfect 3-agent handoff",
+      "condition": "scenario_G2_pass"
+    },
+    {
+      "badge_id": "gauntlet-recovery-hero",
+      "name": "Recovery Hero",
+      "description": "Complete G-3 after handling error",
+      "condition": "scenario_G3_pass"
+    },
+    {
+      "badge_id": "gauntlet-marathon",
+      "name": "Marathon",
+      "description": "Complete all 5 gauntlet scenarios",
+      "condition": "all_scenarios_pass"
+    }
+  ]
 }

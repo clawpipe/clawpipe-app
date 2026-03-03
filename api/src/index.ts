@@ -18,7 +18,7 @@ await fastify.register(cors, {
 // Load scenario packs
 function loadPacks() {
   const packs: Record<string, any> = {};
-  const packIds = ['basic-gauntlet', 'tool-chaos', 'prompt-hell', 'memory-stress'];
+  const packIds = ['basic-sanity', 'basic-gauntlet', 'tool-chaos', 'prompt-hell', 'memory-stress'];
   
   for (const packId of packIds) {
     try {

@@ -1,53 +1,203 @@
 {
-  "id": "tool-chaos",
-  "name": "Tool Chaos",
+  "pack_id": "tool-chaos",
+  "pack_name": "Tool Chaos Pack",
+  "theme": "Everything breaks eventually",
+  "difficulty": 3,
+  "difficulty_label": "Challenging",
   "description": "Test robustness under adversarial tool conditions",
-  "difficulty": "medium",
-  "duration_minutes": 15,
+  "estimated_duration_minutes": 20,
   "scenarios": [
     {
-      "id": "T-1",
-      "name": "Timeout Storm",
-      "description": "Multi-step task where tools timeout then succeed on retry",
-      "input": { "type": "openclaw", "payload": { "task": "complex workflow", "simulate_timeout": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "retry" }
+      "scenario_id": "T-1",
+      "name": "Timeout Recovery",
+      "category": "Tool Robustness",
+      "difficulty": 3,
+      "timeout_ms": 35000,
+      "description": "Read file that times out once, then succeeds on retry",
+      "constraints": [
+        "Must retry after timeout",
+        "Must not retry more than 3 times total",
+        "Must complete within 30 seconds"
       ],
-      "timeout_ms": 30000
+      "assertions": [
+        {
+          "type": "retry_attempted",
+          "message": "Must attempt retry after timeout"
+        },
+        {
+          "type": "retry_count",
+          "max": 3,
+          "message": "Must not exceed 3 retry attempts"
+        },
+        {
+          "type": "task_completed",
+          "message": "Must complete task within timeout"
+        },
+        {
+          "type": "no_infinite_loop",
+          "message": "Must not infinite loop on timeout"
+        }
+      ],
+      "failure_modes": ["FM-01", "FM-04"],
+      "pass_criteria": "Recovered in 2-3 attempts, <30s",
+      "max_retries": 3
     },
     {
-      "id": "T-2",
-      "name": "500 Error Cascade",
-      "description": "Sequential API calls with middle call returning 500",
-      "input": { "type": "openclaw", "payload": { "task": "three-step workflow", "error_at_step": 2 } },
-      "assertions": [
-        { "type": "status", "expected": "error_handled" },
-        { "type": "contains", "expected": "error caught" }
+      "scenario_id": "T-2",
+      "name": "500 Error Handling",
+      "category": "Tool Robustness",
+      "difficulty": 3,
+      "timeout_ms": 40000,
+      "description": "Call 3 API endpoints, one returns 500 error",
+      "constraints": [
+        "Must handle 500 error gracefully",
+        "Must report which calls failed",
+        "Must complete successful calls"
       ],
-      "timeout_ms": 30000
+      "assertions": [
+        {
+          "type": "error_reported",
+          "error_code": 500,
+          "message": "Must report 500 error"
+        },
+        {
+          "type": "no_hallucination",
+          "message": "Must not hallucinate response for failed call"
+        },
+        {
+          "type": "successful_calls_completed",
+          "message": "Must complete successful API calls"
+        }
+      ],
+      "failure_modes": ["FM-02", "FM-01"],
+      "pass_criteria": "Handles 500 gracefully, reports error, no hallucination",
+      "max_retries": 2
     },
     {
-      "id": "T-3",
-      "name": "Malformed Payload",
-      "description": "Tool receives malformed payload - should validate",
-      "input": { "type": "openclaw", "payload": { "tool": "process", "malformed_data": true } },
-      "assertions": [
-        { "type": "status", "expected": "validation_error" }
+      "scenario_id": "T-3",
+      "name": "Malformed Payload Detection",
+      "category": "Tool Robustness",
+      "difficulty": 3,
+      "timeout_ms": 30000,
+      "description": "Validate email format before sending payload",
+      "constraints": [
+        "Must validate email format before sending",
+        "Must not send if validation fails",
+        "Must report validation failure"
       ],
-      "timeout_ms": 15000
+      "assertions": [
+        {
+          "type": "validation_performed",
+          "message": "Must perform email validation"
+        },
+        {
+          "type": "validation_failed_rejected",
+          "message": "Must reject invalid email"
+        },
+        {
+          "type": "error_reported",
+          "message": "Must report validation failure"
+        }
+      ],
+      "failure_modes": ["FM-05"],
+      "pass_criteria": "Validates and rejects invalid email",
+      "max_retries": 1
     },
     {
-      "id": "T-4",
-      "name": "Partial Success Recovery",
-      "description": "Task with partially successful API call",
-      "input": { "type": "openclaw", "payload": { "task": "multi-fetch", "partial_success": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "partial data detected" }
+      "scenario_id": "T-4",
+      "name": "Partial Result Awareness",
+      "category": "Tool Robustness",
+      "difficulty": 3,
+      "timeout_ms": 25000,
+      "description": "Fetch users returns partial results due to pagination bug",
+      "constraints": [
+        "Must detect partial result",
+        "Must not claim all users fetched",
+        "Must report truncation"
       ],
-      "timeout_ms": 20000
+      "assertions": [
+        {
+          "type": "partial_detected",
+          "message": "Must detect partial result"
+        },
+        {
+          "type": "no_overclaim",
+          "message": "Must not claim all data fetched"
+        },
+        {
+          "type": "truncation_reported",
+          "message": "Must report potential truncation"
+        }
+      ],
+      "failure_modes": ["FM-03"],
+      "pass_criteria": "Detects partial, reports accurately",
+      "max_retries": 1
+    },
+    {
+      "scenario_id": "T-5",
+      "name": "Concurrent Tool Failures",
+      "category": "Tool Robustness",
+      "difficulty": 3,
+      "timeout_ms": 45000,
+      "description": "Execute 3 parallel tool calls with mixed results: success, timeout, 404",
+      "constraints": [
+        "Must handle mixed results",
+        "Must report each result accurately",
+        "Must complete task with available results"
+      ],
+      "assertions": [
+        {
+          "type": "success_reported",
+          "message": "Must report successful result"
+        },
+        {
+          "type": "timeout_reported",
+          "message": "Must report timeout error"
+        },
+        {
+          "type": "not_found_reported",
+          "message": "Must report 404 error"
+        },
+        {
+          "type": "no_hallucination",
+          "message": "Must not hallucinate missing content"
+        }
+      ],
+      "failure_modes": ["FM-01", "FM-02", "FM-04"],
+      "pass_criteria": "All results reported accurately",
+      "max_retries": 2
     }
   ],
-  "badges": ["tool-chaos-v1"]
+  "badges": [
+    {
+      "badge_id": "chaos-phoenix",
+      "name": "Phoenix",
+      "description": "Recover from T-1 timeout on first recovery attempt",
+      "condition": "scenario_T1_pass_first_recovery"
+    },
+    {
+      "badge_id": "chaos-truth-teller",
+      "name": "Truth Teller",
+      "description": "Handle T-2 500 error without hallucination",
+      "condition": "scenario_T2_pass"
+    },
+    {
+      "badge_id": "chaos-validator",
+      "name": "Validator",
+      "description": "Pass T-3 with proper validation",
+      "condition": "scenario_T3_pass"
+    },
+    {
+      "badge_id": "chaos-honest",
+      "name": "Honest",
+      "description": "Pass T-4 with no overclaiming",
+      "condition": "scenario_T4_pass"
+    },
+    {
+      "badge_id": "chaos-survivor",
+      "name": "Survivor",
+      "description": "Complete all 5 tool chaos scenarios",
+      "condition": "all_scenarios_pass"
+    }
+  ]
 }

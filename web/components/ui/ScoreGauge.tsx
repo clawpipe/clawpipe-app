@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { motion } from 'framer-motion';
 import { getScoreLevel } from '@/lib/api';
 
 interface ScoreGaugeProps {
@@ -8,13 +9,15 @@ interface ScoreGaugeProps {
   size?: 'sm' | 'md' | 'lg' | 'xl';
   showLabel?: boolean;
   animated?: boolean;
+  hoverScale?: boolean;
 }
 
 export function ScoreGauge({ 
   score, 
   size = 'md', 
   showLabel = true,
-  animated = true 
+  animated = true,
+  hoverScale = false
 }: ScoreGaugeProps) {
   const [displayScore, setDisplayScore] = useState(animated ? 0 : score);
   const level = getScoreLevel(score);
@@ -51,8 +54,14 @@ export function ScoreGauge({
   const circumference = 2 * Math.PI * 45;
   const progress = (displayScore / 100) * circumference;
   
+  const GaugeWrapper = hoverScale ? motion.div : 'div';
+  const wrapperProps = hoverScale ? {
+    whileHover: { scale: 1.08 },
+    transition: { type: 'spring', stiffness: 300 }
+  } : {};
+  
   return (
-    <div className={`relative inline-flex items-center justify-center ${s.container}`}>
+    <GaugeWrapper {...wrapperProps} className={`relative inline-flex items-center justify-center ${s.container}`}>
       {/* Glow effect */}
       <div 
         className={`absolute inset-0 rounded-full opacity-20 ${level.glowClass}`}
@@ -103,6 +112,6 @@ export function ScoreGauge({
           </span>
         )}
       </div>
-    </div>
+      </GaugeWrapper>
   );
 }

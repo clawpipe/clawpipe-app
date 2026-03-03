@@ -4,21 +4,15 @@
  * Clawpipe CLI - Run crash tests from the command line
  */
 
-import { readFileSync, writeFileSync, mkdirSync, existsSync } from 'fs';
-import { join, dirname } from 'path';
-import { fileURLToPath } from 'url';
+import { existsSync, mkdirSync } from 'fs';
+import { writeFileSync } from 'fs';
+import { runScenarioPack, getAvailablePacks } from './runner.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
-
-// Types
-const SCENARIO_PACKS = {
-  'basic-gauntlet': 'Basic Gauntlet',
-  'tool-chaos': 'Tool Chaos',
-  'prompt-hell': 'Prompt Hell',
-  'memory-stress': 'Memory Stress',
-  'basic-sanity': 'Basic Sanity'
-};
+// Get available packs dynamically
+const SCENARIO_PACKS = {};
+getAvailablePacks().forEach(packId => {
+  SCENARIO_PACKS[packId] = packId.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+});
 
 // Colors for CLI output
 const colors = {
@@ -88,8 +82,8 @@ ${colors.cyan}Packs:${colors.reset}
 
 function listCommand() {
   info('Available scenario packs:\n');
-  Object.entries(SCENARIO_PACKS).forEach(([id, name]) => {
-    console.log(`  ${colors.green}•${colors.reset} ${id.padEnd(16)} ${name}`);
+  getAvailablePacks().forEach(packId => {
+    console.log(`  ${colors.green}•${colors.reset} ${packId.padEnd(16)} ${SCENARIO_PACKS[packId]}`);
   });
   console.log('');
 }
@@ -148,61 +142,9 @@ async function runCommand(opts) {
 }
 
 async function runPack(packId, targetUrl) {
-  // Simulate running scenarios
-  const scenarios = getScenarios(packId);
-  const results = [];
-  
-  for (const scenario of scenarios) {
-    // Simulate scenario execution
-    const passed = Math.random() > 0.3; // 70% pass rate
-    results.push({
-      id: scenario.id,
-      name: scenario.name,
-      status: passed ? 'pass' : 'fail',
-      latency_ms: Math.floor(Math.random() * 2000) + 500,
-      error: passed ? null : 'Simulated failure for demo'
-    });
-  }
-
-  // Calculate score
-  const passed = results.filter(r => r.status === 'pass').length;
-  const score = Math.round((passed / results.length) * 100);
-
-  return {
-    id: `run_${Date.now()}`,
-    pack_id: packId,
-    pack_name: SCENARIO_PACKS[packId],
-    target_url: targetUrl,
-    score,
-    status: 'completed',
-    scenarios: results,
-    failures: results.filter(r => r.status === 'fail').map(r => ({
-      scenario_id: r.id,
-      scenario_name: r.name,
-      error: r.error
-    })),
-    started_at: new Date(Date.now() - 5000).toISOString(),
-    completed_at: new Date().toISOString(),
-    duration_ms: 5000
-  };
-}
-
-function getScenarios(packId) {
-  // Basic Sanity scenarios
-  if (packId === 'basic-sanity') {
-    return [
-      { id: 'S-1', name: 'Hello World' },
-      { id: 'S-2', name: 'Two-Agent Handoff' },
-      { id: 'S-3', name: 'Tool Call Success' },
-      { id: 'S-4', name: 'Parallel Execution' },
-      { id: 'S-5', name: 'Graceful Degradation' }
-    ];
-  }
-  // Other packs would load from engine/scenarios/
-  return [
-    { id: '1', name: 'Scenario 1' },
-    { id: '2', name: 'Scenario 2' }
-  ];
+  // Run the pack using the real scenario runner
+  const result = await runScenarioPack(packId, targetUrl);
+  return result;
 }
 
 function saveJsonReport(result, outputDir) {
@@ -223,6 +165,7 @@ function saveMarkdownReport(result, outputDir) {
 | Metric | Value |
 |--------|-------|
 | Pack | ${result.pack_name} |
+| Description | ${result.pack_description || '-'} |
 | Score | **${result.score}** (${level}) |
 | Status | ${result.status} |
 | Duration | ${(result.duration_ms / 1000).toFixed(1)}s |
@@ -233,8 +176,26 @@ function saveMarkdownReport(result, outputDir) {
 
   result.scenarios.forEach(s => {
     const icon = s.status === 'pass' ? '✅' : '❌';
-    md += `| ${icon} | ${s.name} | ${s.latency_ms}ms | ${s.error || '-'} |\n`;
+    md += `| ${icon} | ${s.scenario_name} | ${s.latency_ms}ms | ${s.error || '-'} |\n`;
   });
+
+  // Add sub-scores if available
+  if (result.sub_scores && result.sub_scores.length > 0) {
+    md += `\n## Sub-Scores\n\n`;
+    md += `| Category | Score |\n|----------|-------|\n`;
+    result.sub_scores.forEach(sub => {
+      md += `| ${sub.category} | ${sub.score} |\n`;
+    });
+  }
+
+  // Add badges if earned
+  if (result.badges_earned && result.badges_earned.length > 0) {
+    md += `\n## Badges Earned\n\n`;
+    result.badges_earned.forEach(badge => {
+      md += `- ${badge.icon} ${badge.name}\n`;
+    });
+    md += '\n';
+  }
 
   if (result.failures.length > 0) {
     md += `\n## Failures\n\n`;

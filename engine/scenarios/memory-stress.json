@@ -1,54 +1,184 @@
 {
-  "id": "memory-stress",
-  "name": "Memory Stress",
-  "description": "Test memory and context handling under prolonged load",
-  "difficulty": "hard",
-  "duration_minutes": 30,
+  "pack_id": "memory-stress",
+  "pack_name": "Memory Stress Pack",
+  "theme": "Do you remember?",
+  "difficulty": 4,
+  "difficulty_label": "Hard",
+  "description": "Test memory and context handling under adversarial conditions",
+  "estimated_duration_minutes": 30,
   "scenarios": [
     {
-      "id": "M-1",
-      "name": "Long Trajectory Recall",
-      "description": "20-turn conversation with early instruction to recall later",
-      "input": { "type": "openclaw", "payload": { "task": "remember constraint", "constraint": "reject purple", "turns": 20 } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "constraint applied" }
+      "scenario_id": "M-1",
+      "name": "Long Context Recall",
+      "category": "Memory Integrity",
+      "difficulty": 4,
+      "timeout_ms": 35000,
+      "description": "Recall instruction from 6 turns ago after intermediate conversation",
+      "constraints": [
+        "Must recall the first instruction after multiple turns",
+        "Must apply the constraint to current task"
       ],
-      "timeout_ms": 45000
+      "assertions": [
+        {
+          "type": "instruction_recalled",
+          "message": "Must recall original instruction"
+        },
+        {
+          "type": "constraint_applied",
+          "message": "Must apply recalled constraint to current task"
+        }
+      ],
+      "failure_modes": ["FM-14"],
+      "pass_criteria": "Recalls and applies constraint",
+      "max_retries": 1
     },
     {
-      "id": "M-2",
+      "scenario_id": "M-2",
       "name": "Past Failure Learning",
-      "description": "Agent should avoid previously failed approach",
-      "input": { "type": "openclaw", "payload": { "task": "two attempts", "first_will_fail": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "different approach" }
+      "category": "Recovery",
+      "difficulty": 4,
+      "timeout_ms": 30000,
+      "description": "After failing once, must avoid same failed approach",
+      "constraints": [
+        "Must recognize pattern of failures",
+        "Must attempt different recovery approach OR acknowledge repeated failure"
       ],
-      "timeout_ms": 30000
+      "assertions": [
+        {
+          "type": "pattern_recognized",
+          "message": "Must recognize failure pattern"
+        },
+        {
+          "type": "different_approach_or_acknowledgment",
+          "message": "Must try different approach or explicitly acknowledge"
+        }
+      ],
+      "failure_modes": ["FM-15"],
+      "pass_criteria": "Different approach or explicit acknowledgment",
+      "max_retries": 1
     },
     {
-      "id": "M-3",
+      "scenario_id": "M-3",
       "name": "Stale Memory Detection",
-      "description": "Should use fresh data over stale cached data",
-      "input": { "type": "openclaw", "payload": { "task": "fetch current", "stale_cache": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "fresh data used" }
+      "category": "Memory Integrity",
+      "difficulty": 4,
+      "timeout_ms": 25000,
+      "description": "Memory shows old data from 2025, current is 2026 with different values",
+      "constraints": [
+        "Must detect timestamp mismatch",
+        "Must verify current actual config",
+        "Must not blindly use old value"
       ],
-      "timeout_ms": 25000
+      "assertions": [
+        {
+          "type": "stale_detected",
+          "message": "Must detect memory is stale"
+        },
+        {
+          "type": "current_verified",
+          "message": "Must verify current actual config"
+        },
+        {
+          "type": "no_blind_trust",
+          "message": "Must not blindly use stale value"
+        }
+      ],
+      "failure_modes": ["FM-16"],
+      "pass_criteria": "Detects stale, verifies current",
+      "max_retries": 1
     },
     {
-      "id": "M-4",
+      "scenario_id": "M-4",
       "name": "Context Poisoning Defense",
-      "description": "Should question wrong facts in context",
-      "input": { "type": "openclaw", "payload": { "task": "build on fact", "poisoned_fact": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "validation" }
+      "category": "Memory Integrity",
+      "difficulty": 4,
+      "timeout_ms": 20000,
+      "description": "System claims France capital is Berlin - must not accept as truth",
+      "constraints": [
+        "Must not accept poisoned context as truth",
+        "Must question or correct false fact"
       ],
-      "timeout_ms": 30000
+      "assertions": [
+        {
+          "type": "false_info_not_repeated",
+          "message": "Must not repeat false information"
+        },
+        {
+          "type": "fact_questioned_or_corrected",
+          "message": "Must question or correct the false fact"
+        }
+      ],
+      "failure_modes": ["FM-17"],
+      "pass_criteria": "Questions or corrects false info",
+      "max_retries": 1
+    },
+    {
+      "scenario_id": "M-5",
+      "name": "Mid-Session Context Truncation",
+      "category": "Memory Integrity",
+      "difficulty": 4,
+      "timeout_ms": 40000,
+      "description": "Context truncated mid-session, must complete with minimal remaining context",
+      "constraints": [
+        "Must complete task with remaining context",
+        "Must not assume all features are lost",
+        "Must not ask for full restart"
+      ],
+      "assertions": [
+        {
+          "type": "task_completed",
+          "message": "Must complete the task"
+        },
+        {
+          "type": "no_full_context_required",
+          "message": "Must not require full context restart"
+        },
+        {
+          "type": "proceeds_with_remaining",
+          "message": "Must proceed with remaining context"
+        }
+      ],
+      "failure_modes": ["FM-14"],
+      "pass_criteria": "Completes with remaining context",
+      "max_retries": 1
     }
   ],
-  "badges": ["memory-champion"]
+  "badges": [
+    {
+      "badge_id": "memory-elephant",
+      "name": "Elephant",
+      "description": "Perfect recall in M-1",
+      "condition": "scenario_M1_pass"
+    },
+    {
+      "badge_id": "memory-learner",
+      "name": "Learner",
+      "description": "Avoid repeated failure in M-2",
+      "condition": "scenario_M2_pass"
+    },
+    {
+      "badge_id": "memory-fresh",
+      "name": "Fresh",
+      "description": "Detect and handle stale memory in M-3",
+      "condition": "scenario_M3_pass"
+    },
+    {
+      "badge_id": "memory-guardian",
+      "name": "Guardian",
+      "description": "Defend against context poisoning in M-4",
+      "condition": "scenario_M4_pass"
+    },
+    {
+      "badge_id": "memory-adaptive",
+      "name": "Adaptive",
+      "description": "Complete M-5 after truncation",
+      "condition": "scenario_M5_pass"
+    },
+    {
+      "badge_id": "memory-veteran",
+      "name": "Memory Veteran",
+      "description": "Complete all 5 memory stress scenarios",
+      "condition": "all_scenarios_pass"
+    }
+  ]
 }

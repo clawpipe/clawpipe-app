@@ -1,0 +1,22 @@
+{
+  "$schema": "https://railway.app/schema.json",
+  "build": {
+    "builder": "NIXPACKS_V1_NODE",
+    "buildCommand": "cd api && npm install && cd ../engine && npm install",
+    "startCommand": "cd api && npm run start"
+  },
+  "deploy": {
+    "numReplicas": 1,
+    "restartPolicyType": "ON_FAILURE",
+    "restartPolicyMaxRetries": 10
+  },
+  "environments": {
+    "production": {
+      "build": {
+        "builder": "NIXPACKS_V1_NODE"
+      }
+    }
+  },
+  "name": "clawpipe-api",
+  "region": "us-west-2"
+}

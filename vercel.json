@@ -1,0 +1,22 @@
+{
+  "github": {
+    "enabled": true,
+    "autoDeploy": true,
+    "deployBranch": "main"
+  },
+  "builds": [
+    {
+      "src": "web",
+      "use": "@vercel/next"
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://api.clawpipe.xyz/$1"
+    }
+  ],
+  "env": {
+    "NEXT_PUBLIC_API_URL": "https://api.clawpipe.xyz"
+  }
+}

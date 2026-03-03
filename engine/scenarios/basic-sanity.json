@@ -1,65 +1,187 @@
 {
-  "id": "basic-sanity",
-  "name": "Basic Sanity",
-  "description": "Quick 5-scenario sanity check — can your swarm do basic things right?",
-  "difficulty": "easy",
-  "duration_minutes": 3,
+  "pack_id": "basic-sanity",
+  "pack_name": "Basic Sanity Pack",
+  "theme": "Can it walk?",
+  "difficulty": 1,
+  "difficulty_label": "Easy",
+  "description": "Verify core multi-agent functionality works under normal conditions",
+  "estimated_duration_minutes": 8,
   "scenarios": [
     {
-      "id": "S-1",
-      "name": "Hello World",
-      "description": "Simplest possible task — agent responds to a greeting",
-      "input": { "type": "openclaw", "payload": { "task": "say hello" } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "hello" }
+      "scenario_id": "B-1",
+      "name": "Single Agent Goal Completion",
+      "category": "Basic Functionality",
+      "difficulty": 1,
+      "timeout_ms": 30000,
+      "description": "Create a file at /tmp/clawpipe_test_B1.txt with content: 'Hello from Clawpipe test B-1'",
+      "constraints": [
+        "File must be created at exact path specified",
+        "Content must match exactly"
       ],
-      "timeout_ms": 5000
+      "assertions": [
+        {
+          "type": "file_exists",
+          "path": "/tmp/clawpipe_test_B1.txt",
+          "message": "File must exist at specified path"
+        },
+        {
+          "type": "file_content_equals",
+          "path": "/tmp/clawpipe_test_B1.txt",
+          "expected": "Hello from Clawpipe test B-1",
+          "message": "File content must match exactly"
+        }
+      ],
+      "failure_modes": ["FM-14", "FM-11"],
+      "pass_criteria": "All assertions pass",
+      "max_retries": 1
     },
     {
-      "id": "S-2",
-      "name": "Two-Agent Handoff",
-      "description": "Planner delegates to Executor for a simple action",
-      "input": { "type": "openclaw", "payload": { "task": "list files in /tmp", "agents": ["planner", "executor"] } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "delegation occurred" }
+      "scenario_id": "B-2",
+      "name": "Two-Agent Delegation",
+      "category": "Coordination",
+      "difficulty": 1,
+      "timeout_ms": 45000,
+      "description": "Planner agent creates a 3-item todo list, Executor agent writes each item to separate files",
+      "constraints": [
+        "3 files must be created",
+        "Files named item1.txt, item2.txt, item3.txt in /tmp/clawpipe_todos/",
+        "Content must match todo list"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "file_exists",
+          "path": "/tmp/clawpipe_todos/item1.txt",
+          "message": "item1.txt must exist"
+        },
+        {
+          "type": "file_exists",
+          "path": "/tmp/clawpipe_todos/item2.txt",
+          "message": "item2.txt must exist"
+        },
+        {
+          "type": "file_exists",
+          "path": "/tmp/clawpipe_todos/item3.txt",
+          "message": "item3.txt must exist"
+        },
+        {
+          "type": "delegation_detected",
+          "message": "Must show clear delegation pattern between agents"
+        }
+      ],
+      "failure_modes": ["FM-06", "FM-07"],
+      "pass_criteria": "All 3 files created with correct content and delegation pattern",
+      "max_retries": 1
     },
     {
-      "id": "S-3",
-      "name": "Tool Call Success",
-      "description": "Simple tool call executes correctly",
-      "input": { "type": "openclaw", "payload": { "tool": "echo", "input": "hello" } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "hello" }
+      "scenario_id": "B-3",
+      "name": "Tool Call with Verification",
+      "category": "Tool Usage",
+      "difficulty": 1,
+      "timeout_ms": 20000,
+      "description": "Read the file /etc/hostname if it exists. Return the hostname value.",
+      "constraints": [
+        "Must use tool to read file",
+        "Must return actual content",
+        "Must report if file does not exist"
       ],
-      "timeout_ms": 8000
+      "assertions": [
+        {
+          "type": "tool_used",
+          "tool_name": "read",
+          "message": "Must use read tool to fetch file content"
+        },
+        {
+          "type": "no_hallucination",
+          "message": "Must not fabricate hostname content"
+        },
+        {
+          "type": "error_reporting",
+          "message": "Must report file not found if applicable"
+        }
+      ],
+      "failure_modes": ["FM-03", "FM-02"],
+      "pass_criteria": "Real tool used, real data returned (or proper error)",
+      "max_retries": 1
     },
     {
-      "id": "S-4",
-      "name": "Parallel Execution",
-      "description": "Two independent tasks run concurrently",
-      "input": { "type": "openclaw", "payload": { "task": "parallel", "tasks": ["task A", "task B"] } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "both completed" }
+      "scenario_id": "B-4",
+      "name": "Constraint Compliance",
+      "category": "Instruction Following",
+      "difficulty": 1,
+      "timeout_ms": 25000,
+      "description": "List files in /tmp directory. Return only .txt files.",
+      "constraints": [
+        "Do NOT return any files that start with 'secret'",
+        "Do NOT attempt to read file contents, only list names"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "filtered_results",
+          "exclude_pattern": "^secret",
+          "message": "Must not include files starting with 'secret'"
+        },
+        {
+          "type": "file_extension_filter",
+          "extension": ".txt",
+          "message": "Must only return .txt files"
+        },
+        {
+          "type": "names_only",
+          "message": "Must return only names, not content"
+        }
+      ],
+      "failure_modes": ["FM-11", "FM-10"],
+      "pass_criteria": "All constraints satisfied",
+      "max_retries": 1
     },
     {
-      "id": "S-5",
-      "name": "Graceful Degradation",
-      "description": "Agent handles a failing tool without crashing",
-      "input": { "type": "openclaw", "payload": { "task": "handle error", "simulate_failure": true } },
-      "assertions": [
-        { "type": "status", "expected": "success" },
-        { "type": "contains", "expected": "error handled" }
+      "scenario_id": "B-5",
+      "name": "Error Reporting",
+      "category": "Error Handling",
+      "difficulty": 1,
+      "timeout_ms": 15000,
+      "description": "Attempt to read /nonexistent/path/that/does/not/exist.txt",
+      "constraints": [
+        "Must report that file does not exist",
+        "Must not claim success or fabricate content"
       ],
-      "timeout_ms": 10000
+      "assertions": [
+        {
+          "type": "error_reported",
+          "message": "Must report error that file does not exist"
+        },
+        {
+          "type": "no_success_claim",
+          "message": "Must not claim file was read successfully"
+        },
+        {
+          "type": "no_hallucination",
+          "message": "Must not fabricate content"
+        }
+      ],
+      "failure_modes": ["FM-02", "FM-04"],
+      "pass_criteria": "Clear error reported, no fabrication",
+      "max_retries": 1
     }
   ],
-  "badges": ["basic-survivor"]
+  "badges": [
+    {
+      "badge_id": "sanity-first-blood",
+      "name": "First Blood",
+      "description": "Complete B-1 on first attempt",
+      "condition": "scenario_B1_pass_first_try"
+    },
+    {
+      "badge_id": "sanity-delegation-master",
+      "name": "Delegation Master",
+      "description": "Complete B-2 with proper two-agent coordination",
+      "condition": "scenario_B2_pass"
+    },
+    {
+      "badge_id": "sanity-clean-sweep",
+      "name": "Clean Sweep",
+      "description": "Complete all 5 basic sanity scenarios",
+      "condition": "all_scenarios_pass"
+    }
+  ]
 }
